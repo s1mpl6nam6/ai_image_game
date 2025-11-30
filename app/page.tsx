@@ -1,65 +1,144 @@
-import Image from "next/image";
+"use client";
+
+import { ImageWrapper, QuestionArea } from "../components/components";
+
+import { fetch_ai_images } from "../scripts/fetch_images";
+import { gen_three } from "../scripts/generate_ai_prompts";
+
+import { SelectedContext } from "../context/selectedContext";
+import { useEffect, useState, useTransition } from "react";
+
+import {
+  Dialog,
+  DialogClose,
+  DialogTrigger,
+  DialogHeader,
+  DialogFooter,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 export default function Home() {
+  // * rewrite with reducer later
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [loadingStatus, setLoadingStatus] = useState("Loading");
+
+  const [prompts, setPrompts] = useState([""]);
+  const [correctPrompt, setCorrectPrompt] = useState(-1);
+  const [selectedItem, setSelectedItem] = useState(-1);
+  const [isAnswered, setIsAnswered] = useState(false);
+
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [score, setScore] = useState(0);
+  const [attempts, setAttempts] = useState(0);
+
+  const [imageUrl, setImageUrl] = useState("");
+
+  function submitted() {
+    setIsCorrect(correctPrompt == selectedItem);
+    setIsAnswered(true);
+    if (isCorrect) setScore(score + 1);
+    setAttempts(attempts + 1);
+  }
+
+  function reset() {
+    setRefreshToken(refreshToken + 1);
+  }
+
+  async function load() {
+    setLoadingStatus("Generating Prompts");
+    const gen_prompts: string[] = await gen_three();
+    setPrompts(gen_prompts);
+    const random_index: number = Math.floor(Math.random() * 3);
+    setLoadingStatus("Generating Images");
+    setCorrectPrompt(random_index);
+    const prompt = prompts[random_index];
+    const img_url = await fetch_ai_images(prompt);
+    setLoadingStatus("Loading");
+    setImageUrl(img_url);
+    setIsLoading(false);
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  useEffect(() => {
+    setSelectedItem(-1);
+    setIsCorrect(false);
+    setIsAnswered(false);
+    load();
+  }, [refreshToken]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center">{loadingStatus}...</div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="font-mono">
+      <Dialog>
+        <div className="flex flex-row">
+          <ImageWrapper url={imageUrl} />
+          <SelectedContext.Provider
+            value={{ selectedItem, setSelectedItem, isAnswered, correctPrompt}}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <QuestionArea gen_prompts={prompts} />
+          </SelectedContext.Provider>
         </div>
-      </main>
+
+        <div className="flex items-center flex-col">
+          <div className="flex gap-4 items-center justify-center p-4">
+            <button
+              onClick={reset}
+              className="hover:shadow-md shadow-[#FF8400] color-[#E7D0C0] rounded-[20px] pr-3 pl-3 pt-1 pb-1 border-2 text-[#F6EDE2]"
+            >
+              New Image
+            </button>
+            <DialogTrigger asChild>
+              <button
+                className="bg-[#D9BDA5] rounded-[20px] pr-3 pl-3 pt-1 pb-1 hover:shadow-sm shadow-[#FF8400]"
+                disabled={isAnswered || selectedItem == -1}
+                onClick={submitted}
+              >
+                Submit
+              </button>
+            </DialogTrigger>
+          </div>
+          <div className="text-[#F6EEE3]">
+            <span className="text-[#8FFF83]">{score} Correct</span> :{" "}
+            <span className="text-[#FF7D7D]">{attempts - score} Incorrect</span>
+          </div>
+        </div>
+
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {isCorrect ? "You got it correct!" : "Sorry, you were wrong"}
+            </DialogTitle>
+            <DialogDescription>
+              The correct answer was "{prompts[correctPrompt]}"
+              <br />
+              Your current score is {score}.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose>Close</DialogClose>
+            <DialogClose asChild>
+              <button
+                onClick={reset}
+                className="color-[#E7D0C0] rounded-[20px] pr-3 pl-3 pt-1 pb-1 border-2 text-[#F6EDE2] "
+              >
+                New Image
+              </button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
