@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Span } from "next/dist/trace";
 
 export default function Home() {
   // * rewrite with reducer later
@@ -38,9 +39,10 @@ export default function Home() {
   const [imageUrl, setImageUrl] = useState("");
 
   function submitted() {
-    setIsCorrect(correctPrompt == selectedItem);
+		const isRight = correctPrompt == selectedItem
+    setIsCorrect(isRight);
     setIsAnswered(true);
-    if (isCorrect) setScore(score + 1);
+    if (isRight) setScore(score + 1);
     setAttempts(attempts + 1);
   }
 
@@ -75,17 +77,20 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center">{loadingStatus}...</div>
+      <div className="flex items-center justify-center text-[#F6EEE3]">{loadingStatus}...</div>
     );
   }
 
   return (
-    <div className="font-mono">
+
+
+    <div className="font-mono flex flex-col items-center">
+			<h1 className="text-[#F6EEE3] text-2xl p-5"> Which Prompt Generated This Image? </h1>
       <Dialog>
-        <div className="flex flex-row">
+        <div className="flex items-center flex-col lg:flex-row">
           <ImageWrapper url={imageUrl} />
           <SelectedContext.Provider
-            value={{ selectedItem, setSelectedItem, isAnswered, correctPrompt}}
+            value={{ selectedItem, setSelectedItem, isAnswered, correctPrompt }}
           >
             <QuestionArea gen_prompts={prompts} />
           </SelectedContext.Provider>
@@ -101,7 +106,11 @@ export default function Home() {
             </button>
             <DialogTrigger asChild>
               <button
-                className="bg-[#D9BDA5] rounded-[20px] pr-3 pl-3 pt-1 pb-1 hover:shadow-sm shadow-[#FF8400]"
+                className={` rounded-[20px] pr-3 pl-3 pt-1 pb-1  ${
+                  isAnswered || selectedItem == -1
+                    ? "bg-[#2B2B2B] text-[#191919] "
+                    : "hover:shadow-sm shadow-[#FF8400] bg-[#D9BDA5]"
+                }`}
                 disabled={isAnswered || selectedItem == -1}
                 onClick={submitted}
               >
@@ -115,30 +124,24 @@ export default function Home() {
           </div>
         </div>
 
-        <DialogContent>
+        <DialogContent className="bg-[#202020] font-mono">
           <DialogHeader>
             <DialogTitle>
-              {isCorrect ? "You got it correct!" : "Sorry, you were wrong"}
+              {isCorrect 
+							? <span className="text-[#8FFF83]">
+								You got it correct!
+								</span>
+							: <span className="text-[#FF7D7D]">
+								Sorry, you were wrong.
+								</span>}
             </DialogTitle>
-            <DialogDescription>
-              The correct answer was "{prompts[correctPrompt]}"
-              <br />
-              Your current score is {score}.
-            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose>Close</DialogClose>
-            <DialogClose asChild>
-              <button
-                onClick={reset}
-                className="color-[#E7D0C0] rounded-[20px] pr-3 pl-3 pt-1 pb-1 border-2 text-[#F6EDE2] "
-              >
-                New Image
-              </button>
-            </DialogClose>
+            <DialogClose className="text-[#F6EEE3] border-2 hover:shadow-md shadow-[#FF8400]">See Answer</DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
