@@ -19,7 +19,7 @@ const responseJsonSchema = {
   maxItems: 3,
 }
 
-// const ai = new GoogleGenAI({apiKey});
+const ai = new GoogleGenAI({apiKey});
 
 export async function gen_three() {
   // const response = await ai.models.generateContent({

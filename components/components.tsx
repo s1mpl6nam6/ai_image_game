@@ -1,8 +1,6 @@
-import { useState } from "react";
 import Image from "next/image";
 
 import { useSelected } from "../context/selectedContext";
-import { Bubbles } from "lucide-react";
 
 export function ImageWrapper({ url }: { url: string }) {
   return (
@@ -12,7 +10,8 @@ export function ImageWrapper({ url }: { url: string }) {
         width={388}
         height={388}
         src={
-          "https://storage.imagerouter.io/b35083d9-b150-42e2-abb9-fad4d35c8f06.jpg"
+          // "https://storage.imagerouter.io/b35083d9-b150-42e2-abb9-fad4d35c8f06.jpg"
+          url
         }
         alt={"Image not loading, please reload the page."}
       ></Image>

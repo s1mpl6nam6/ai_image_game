@@ -2,7 +2,10 @@
 
 import { ImageWrapper, QuestionArea } from "../components/components";
 
-import { fetch_ai_images } from "../scripts/fetch_images";
+import {
+  fetch_im_rout_images,
+  fetch_runware_images,
+} from "../scripts/fetch_images";
 import { gen_three } from "../scripts/generate_ai_prompts";
 
 import { SelectedContext } from "../context/selectedContext";
@@ -39,7 +42,7 @@ export default function Home() {
   const [imageUrl, setImageUrl] = useState("");
 
   function submitted() {
-		const isRight = correctPrompt == selectedItem
+    const isRight = correctPrompt == selectedItem;
     setIsCorrect(isRight);
     setIsAnswered(true);
     if (isRight) setScore(score + 1);
@@ -51,22 +54,47 @@ export default function Home() {
   }
 
   async function load() {
+		// ! should create a new script which aggregates this and grabs from db
+
     setLoadingStatus("Generating Prompts");
-    const gen_prompts: string[] = await gen_three();
+    let gen_prompts: string[] = [];
+    try {
+      gen_prompts = await gen_three();
+    } catch (e: unknown) {
+      setLoadingStatus("Unexpected error with Prompt Generation");
+      if (e instanceof Error) {
+        setLoadingStatus("Error Generating Prompts: " + e.message);
+      }
+      return;
+    }
     setPrompts(gen_prompts);
     const random_index: number = Math.floor(Math.random() * 3);
     setLoadingStatus("Generating Images");
     setCorrectPrompt(random_index);
     const prompt = prompts[random_index];
-    const img_url = await fetch_ai_images(prompt);
+    let img_url = "";
+
+    try {
+      img_url = (await fetch_runware_images(prompt)) ?? "";
+    } catch (e) {
+      setLoadingStatus("Unexpected error with Prompt Generation");
+      if (e instanceof Error) {
+        setLoadingStatus("Error Generating Images: " + e.message);
+      }
+      return;
+    }
+
     setLoadingStatus("Loading");
     setImageUrl(img_url);
     setIsLoading(false);
   }
 
-  useEffect(() => {
-    load();
-  }, []);
+
+	// ! change this so the user has to press a button to generate
+
+  // useEffect(() => {
+  //   load();
+  // }, []);
 
   useEffect(() => {
     setSelectedItem(-1);
@@ -77,15 +105,18 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center text-[#F6EEE3]">{loadingStatus}...</div>
+      <div className="flex items-center justify-center text-[#F6EEE3]">
+        {loadingStatus}...
+      </div>
     );
   }
 
   return (
-
-
     <div className="font-mono flex flex-col items-center">
-			<h1 className="text-[#F6EEE3] text-2xl p-5"> Which Prompt Generated This Image? </h1>
+      <h1 className="text-[#F6EEE3] text-2xl p-5">
+        {" "}
+        Which Prompt Generated This Image?{" "}
+      </h1>
       <Dialog>
         <div className="flex items-center flex-col lg:flex-row">
           <ImageWrapper url={imageUrl} />
@@ -127,21 +158,20 @@ export default function Home() {
         <DialogContent className="bg-[#202020] font-mono">
           <DialogHeader>
             <DialogTitle>
-              {isCorrect 
-							? <span className="text-[#8FFF83]">
-								You got it correct!
-								</span>
-							: <span className="text-[#FF7D7D]">
-								Sorry, you were wrong.
-								</span>}
+              {isCorrect ? (
+                <span className="text-[#8FFF83]">You got it correct!</span>
+              ) : (
+                <span className="text-[#FF7D7D]">Sorry, you were wrong.</span>
+              )}
             </DialogTitle>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose className="text-[#F6EEE3] border-2 hover:shadow-md shadow-[#FF8400]">See Answer</DialogClose>
+            <DialogClose className="text-[#F6EEE3] border-2 hover:shadow-md shadow-[#FF8400]">
+              See Answer
+            </DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }
