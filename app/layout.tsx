@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SelectedProvider } from "@/context/selectedContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,14 +25,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#202020] flex flex-col justify-center p-1`}
-      >
-        {children}
-        <footer className="text-gray-700 font-mono pt-3 pr-3 pl-3 text-[8pt]">
-          Made by Aran Ramakrishnan, aran.ramakrishnan@gmail.com
-        </footer>
-      </body>
+      <SelectedProvider>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#202020] flex flex-col justify-center p-1`}
+        >
+          {children}
+          <footer className="text-gray-700 font-mono pt-3 pr-3 pl-3 text-[8pt]">
+            Made by Aran Ramakrishnan, aran.ramakrishnan@gmail.com
+          </footer>
+        </body>
+      </SelectedProvider>
     </html>
   );
 }

@@ -30,25 +30,24 @@ export function QuestionArea({ gen_prompts }: { gen_prompts: string[] }) {
 }
 
 function Question({ text, index }: { text: string; index: number }) {
-  const { selectedItem, setSelectedItem, isAnswered, correctPrompt } =
-    useSelected();
+  const { state, dispatch } =useSelected();
 
   return (
     <button
-      disabled={isAnswered}
-      onClick={() => setSelectedItem(index)}
+      disabled={state.isAnswered}
+      onClick={() => dispatch({type: "setSelectedItem", payload: index})}
       className={`p-4 rounded-sm max-w-lg text-[#0B0B0]
       ${
-        isAnswered
-          ? correctPrompt == index
+        state.isAnswered
+          ? state.correctPrompt == index
             ? "bg-[#8FFF83]"
             : "bg-[#FF7D7D]"
-          : selectedItem != index
+          : state.selectedItem != index
           ? "bg-gradient-to-r from-[#F6EEE3] to-[#E5CBBA] hover:shadow-md shadow-[#FF8400]"
           : "bg-[#F4CA90] "
       }
       ${
-        selectedItem != index
+        state.selectedItem != index
           ? "border-2"
           : "border-2 border-[#FF8400] shadow-lg shadow-[#FF8400]"
       } `}

@@ -8,8 +8,7 @@ import {
 } from "../scripts/fetch_images";
 import { gen_three } from "../scripts/generate_ai_prompts";
 
-import { SelectedContext } from "../context/selectedContext";
-import { useEffect, useState, useTransition } from "react";
+import { useSelected } from "../context/selectedContext";
 
 import {
   Dialog,
@@ -21,87 +20,96 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Span } from "next/dist/trace";
 
 export default function Home() {
-  // * rewrite with reducer later
+  const { state, dispatch } = useSelected();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshToken, setRefreshToken] = useState(0);
-  const [loadingStatus, setLoadingStatus] = useState("Loading");
-
-  const [prompts, setPrompts] = useState([""]);
-  const [correctPrompt, setCorrectPrompt] = useState(-1);
-  const [selectedItem, setSelectedItem] = useState(-1);
-  const [isAnswered, setIsAnswered] = useState(false);
-
-  const [isCorrect, setIsCorrect] = useState(false);
-  const [score, setScore] = useState(0);
-  const [attempts, setAttempts] = useState(0);
-
-  const [imageUrl, setImageUrl] = useState("");
+  const {
+    isLoading,
+    loadingStatus,
+    prompts,
+    correctPrompt,
+    selectedItem,
+    isAnswered,
+    isCorrect,
+    score,
+    attempts,
+    refreshToken,
+    imageUrl,
+  } = state;
 
   function submitted() {
     const isRight = correctPrompt == selectedItem;
-    setIsCorrect(isRight);
-    setIsAnswered(true);
-    if (isRight) setScore(score + 1);
-    setAttempts(attempts + 1);
+    dispatch({ type: "setIsCorrect", payload: isRight });
+    dispatch({ type: "setIsAnswered", payload: true });
+    if (isRight) dispatch({ type: "setScore", payload: score + 1 });
+    dispatch({ type: "setAttempts", payload: attempts + 1 });
   }
 
   function reset() {
-    setRefreshToken(refreshToken + 1);
+    dispatch({ type: "updateRefreshToken" });
   }
 
   async function load() {
-		// ! should create a new script which aggregates this and grabs from db
+    // ! should create a new script which aggregates this and grabs from db
 
-    setLoadingStatus("Generating Prompts");
+    dispatch({ type: "setLoadingStatus", payload: "Generating Prompts" });
     let gen_prompts: string[] = [];
     try {
       gen_prompts = await gen_three();
     } catch (e: unknown) {
-      setLoadingStatus("Unexpected error with Prompt Generation");
+      dispatch({
+        type: "setLoadingStatus",
+        payload: "Unexpected error with Prompt Generation",
+      });
       if (e instanceof Error) {
-        setLoadingStatus("Error Generating Prompts: " + e.message);
+        dispatch({
+          type: "setLoadingStatus",
+          payload: "Error Generating Prompts: " + e.message,
+        });
       }
       return;
     }
-    setPrompts(gen_prompts);
+    dispatch({ type: "setPrompts", payload: gen_prompts });
     const random_index: number = Math.floor(Math.random() * 3);
-    setLoadingStatus("Generating Images");
-    setCorrectPrompt(random_index);
+    dispatch({ type: "setLoadingStatus", payload: "Generating Images" });
+    dispatch({ type: "setCorrectPrompt", payload: random_index });
     const prompt = prompts[random_index];
     let img_url = "";
 
     try {
       img_url = (await fetch_runware_images(prompt)) ?? "";
     } catch (e) {
-      setLoadingStatus("Unexpected error with Prompt Generation");
+      dispatch({
+        type: "setLoadingStatus",
+        payload: "Unexpected error with Prompt Generation",
+      });
       if (e instanceof Error) {
-        setLoadingStatus("Error Generating Images: " + e.message);
+        dispatch({
+          type: "setLoadingStatus",
+          payload: "Error Generating Images: " + e.message,
+        });
       }
       return;
     }
 
-    setLoadingStatus("Loading");
-    setImageUrl(img_url);
-    setIsLoading(false);
+    dispatch({ type: "setLoadingStatus", payload: "Loading" });
+    dispatch({ type: "setImageUrl", payload: img_url });
+    dispatch({ type: "setIsLoading", payload: false });
   }
 
-
-	// ! change this so the user has to press a button to generate
+  // ! change this so the user has to press a button to generate
 
   // useEffect(() => {
   //   load();
   // }, []);
 
-  useEffect(() => {
-    setSelectedItem(-1);
-    setIsCorrect(false);
-    setIsAnswered(false);
-    load();
-  }, [refreshToken]);
+  // useEffect(() => {
+  //   setSelectedItem(-1);
+  //   setIsCorrect(false);
+  //   setIsAnswered(false);
+  //   load();
+  // }, [refreshToken]);
 
   if (isLoading) {
     return (
@@ -120,11 +128,7 @@ export default function Home() {
       <Dialog>
         <div className="flex items-center flex-col lg:flex-row">
           <ImageWrapper url={imageUrl} />
-          <SelectedContext.Provider
-            value={{ selectedItem, setSelectedItem, isAnswered, correctPrompt }}
-          >
-            <QuestionArea gen_prompts={prompts} />
-          </SelectedContext.Provider>
+          <QuestionArea gen_prompts={prompts} />
         </div>
 
         <div className="flex items-center flex-col">

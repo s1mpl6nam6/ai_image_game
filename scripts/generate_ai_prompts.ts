@@ -3,8 +3,6 @@
 import { GoogleGenAI } from "@google/genai";
 import 'dotenv/config';
 import {z} from 'zod';
-import { zodToJsonSchema } from "zod-to-json-schema";
-
 const apiKey = process.env.GEMINI_API_KEY
 if (!apiKey) {
   throw new Error("GEMINI_API_KEY is not set in your environment");
