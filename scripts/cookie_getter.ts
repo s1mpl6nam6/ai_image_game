@@ -13,4 +13,3 @@ export async function getSeenCookies() {
 
   return seen;
 }
-

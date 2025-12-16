@@ -18,7 +18,7 @@ const tableName = "imagesAndPrompts";
 export async function grabFromDB(unique: boolean = true, seen?: string[]) {
   let selectedRow;
 
-  if (!unique) {
+  if (!unique || !seen) {
     const max =
       (
         await supabase
@@ -31,8 +31,7 @@ export async function grabFromDB(unique: boolean = true, seen?: string[]) {
       .select("*")
       .eq("id", randomId);
 
-    if (error) console.error(error);
-
+    if (error) console.error("ERROR grabbing from Supabase:" + error);
     selectedRow = data?.[0] || null;
   } else {
     if (!seen) {
@@ -51,13 +50,16 @@ export async function grabFromDB(unique: boolean = true, seen?: string[]) {
     if (error) console.error(error);
 
     selectedRow = data?.[0] || null;
+    if (!selectedRow) {
+      console.error("Selected row is null, data: " + data!)
+    }
   }
-  setCookie(selectedRow.id);
+
   return {
     gen_prompts: [
-      selectedRow.prompt0,
-      selectedRow.prompt1,
-      selectedRow.prompt2,
+      selectedRow.prompt_0,
+      selectedRow.prompt_1,
+      selectedRow.prompt_2,
     ],
     correct_prompt: selectedRow.correct_prompt,
     url: selectedRow.url,
@@ -91,7 +93,7 @@ export async function addToDB({
 
   let id = -1;
   if (data) {
-    id = (data[0].id);
+    id = data[0].id;
   }
   return id;
 }

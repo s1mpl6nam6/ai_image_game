@@ -20,21 +20,21 @@ const responseJsonSchema = {
 const ai = new GoogleGenAI({apiKey});
 
 export async function gen_three() {
-  // const response = await ai.models.generateContent({
-  //     model: "gemini-2.5-flash-lite",
-  //     contents: "Provide three (<= 20 words each) semi-descriptive prompts that all describe the same image for image generation.",
-  //     config: {
-  //       responseMimeType : "application/json",
-  //       responseJsonSchema : responseJsonSchema,
-  //     },
-  // });
-  // const result = (JSON.parse(response.text ?? ""));
+  const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-lite",
+      contents: "Provide three (<= 20 words each) semi-descriptive prompts that all describe the same image for image generation. Make sure they are all very similar, with maybe a key difference. Do not reference previous requests. Assume no prior context. Do not just use nature as references",
+      config: {
+        responseMimeType : "application/json",
+        responseJsonSchema : responseJsonSchema,
+      },
+  });
+  const result = (JSON.parse(response.text ?? ""));
 
   // ! temporary just to not exceed rate limits
-  const result = [
-    "Vivid cyberpunk cityscape, neon glow, wet streets, flying vehicles",
-    "A solitary lighthouse stands on a rugged, misty coastline at dawn.",
-    "Vintage photo of a bustling 1920s jazz club, dim light, dancing couples."
-  ]
+  // const result = [
+  //   "Vivid cyberpunk cityscape, neon glow, wet streets, flying vehicles",
+  //   "A solitary lighthouse stands on a rugged, misty coastline at dawn.",
+  //   "Vintage photo of a bustling 1920s jazz club, dim light, dancing couples."
+  // ]
   return result
 }

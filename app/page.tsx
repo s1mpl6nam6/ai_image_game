@@ -53,6 +53,9 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      dispatch({ type: "setLoadingStatus", payload: "Loading New Image" })
+      dispatch({ type: "setLoading", payload: true });
+
       const res = await new_round((value: string) =>
         dispatch({ type: "setLoadingStatus", payload: value })
       );
@@ -70,6 +73,7 @@ export default function Home() {
       dispatch({ type: "setImageUrl", payload: url });
       dispatch({ type: "setPrompts", payload: gen_prompts });
       dispatch({ type: "setCorrectPrompt", payload: correct_prompt });
+      dispatch({ type: "setLoading", payload: false });
     })();
 
     return () => {

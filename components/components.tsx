@@ -7,8 +7,8 @@ export function ImageWrapper({ url }: { url: string }) {
     <div className="flex items-center p-4 ">
       <Image
         className="rounded-md border-1"
-        width={388}
-        height={388}
+        width={512}
+        height={512}
         src={
           // "https://storage.imagerouter.io/b35083d9-b150-42e2-abb9-fad4d35c8f06.jpg"
           url

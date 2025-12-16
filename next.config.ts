@@ -9,12 +9,20 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "storage.imagerouter.io"
+        hostname: "storage.imagerouter.io",
       },
       {
         protocol: "https",
-        hostname: "t4.ftcdn.net"
-      }
+        hostname: "t4.ftcdn.net",
+      },
+      {
+        protocol: "https",
+        hostname: "im.runware.ai",
+      },
+      {
+        protocol: "https",
+        hostname: "jzvpfkrdwdvqpycdiqhq.supabase.co",
+      },
     ],
   },
 };

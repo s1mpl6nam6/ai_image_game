@@ -53,6 +53,7 @@ async function genNewQuestion() {
   } catch (e) {
     // setLoadingStatus("Unexpected error with Prompt Generation");
     console.error("Error Generating Images");
+    console.error(e)
     if (e instanceof Error) {
       // setLoadingStatus("Error Generating Images: " + e.message);
       const { gen_prompts, correct_prompt, url, id } = (await grabFromDB(
