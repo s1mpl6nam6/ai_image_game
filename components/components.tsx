@@ -14,6 +14,7 @@ export function ImageWrapper({ url }: { url: string }) {
           url
         }
         alt={"Image not loading, please reload the page."}
+        unoptimized
       ></Image>
     </div>
   );

@@ -7,6 +7,8 @@ import { NextResponse } from "next/server";
 import { setCookie } from "../cookie_sender";
 
 import "dotenv/config";
+import { FileOutput } from "lucide-react";
+import { error } from "console";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,52 +21,59 @@ export async function grabFromDB(unique: boolean = true, seen?: string[]) {
   let selectedRow;
 
   if (!unique || !seen) {
-    const max =
-      (
-        await supabase
-          .from(tableName)
-          .select("id", { count: "exact", head: true })
-      ).count ?? 0;
-    const randomId = Math.floor(Math.random() * max) + 1;
+    const { count } = await supabase
+      .from(tableName)
+      .select("id", { count: "exact", head: true });
+
+    const offset = Math.floor(Math.random() * (count ?? 0));
+
     const { data, error } = await supabase
       .from(tableName)
       .select("*")
-      .eq("id", randomId);
+      .range(offset, offset);
 
-    if (error) console.error("ERROR grabbing from Supabase:" + error);
-    selectedRow = data?.[0] || null;
+    if (error) throw error;
+    if (!data?.length) throw new Error("No row returned");
+    console.log("This is data: " + data!)
+
+    selectedRow = data[0];
   } else {
     if (!seen) {
       return console.error("Cookies needed if unique is true");
     }
 
-    const list = seen.join(",");
+    const list = `(${seen.join(",")})`;
 
     const { data, error } = await supabase
       .from(tableName)
       .select("*")
       .not("id", "in", list)
-      .order("RANDOM()")
-      .limit(1);
+      .limit(50);
 
-    if (error) console.error(error);
-
-    selectedRow = data?.[0] || null;
-    if (!selectedRow) {
-      console.error("Selected row is null, data: " + data!)
-    }
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error("Data is null");
+    if (!data?.length) throw new Error("No unseen rows");
+    console.log("This is data: " + data!)
+    selectedRow = data[Math.floor(Math.random() * data.length)];
   }
-
-  return {
-    gen_prompts: [
-      selectedRow.prompt_0,
-      selectedRow.prompt_1,
-      selectedRow.prompt_2,
-    ],
-    correct_prompt: selectedRow.correct_prompt,
-    url: selectedRow.url,
-    id: selectedRow.id,
-  };
+  if (!selectedRow) {
+    throw new Error("Selected row is null");
+  }
+  try {
+    const output = {
+      gen_prompts: [
+        selectedRow.prompt_0,
+        selectedRow.prompt_1,
+        selectedRow.prompt_2,
+      ],
+      correct_prompt: selectedRow.correct_prompt,
+      url: selectedRow.url,
+      id: selectedRow.id,
+    };
+    return output;
+  } catch (e) {
+    console.error("Error returning from db:" + e);
+  }
 }
 
 export async function addToDB({
@@ -123,7 +132,7 @@ async function addImageToBucket(imageURL: string) {
   const filePath = `uploads/${crypto.randomUUID()}.${fileType}`;
 
   const { error: uploadError } = await supabase.storage
-    .from("imagesGenerated") // your bucket name
+    .from("imagesGenerated")
     .upload(filePath, buffer, {
       contentType,
       upsert: false,

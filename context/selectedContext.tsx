@@ -31,7 +31,7 @@ function reducer(state: State, action: Action) {
     case "setSelectedItem":
       return { ...state, selectedItem: action.payload };
     case "setIsAnswered":
-      return { ...state, isAnswered: action.payload };
+      return { ...state, isAnswered: action.payload , selectedItem: -1};
     case "setIsCorrect":
       return { ...state, isCorrect: action.payload };
     case "setScore":
