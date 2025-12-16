@@ -2,13 +2,8 @@
 
 import { ImageWrapper, QuestionArea } from "../components/components";
 
-import {
-  fetch_im_rout_images,
-  fetch_runware_images,
-} from "../scripts/fetch_images";
-import { gen_three } from "../scripts/generate_ai_prompts";
-
 import { useSelected } from "../context/selectedContext";
+import { new_round } from "@/scripts/load_new_round";
 
 import {
   Dialog,
@@ -20,10 +15,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useEffect } from "react";
+import { setCookie } from "@/scripts/cookie_sender";
 
 export default function Home() {
   const { state, dispatch } = useSelected();
-
   const {
     isLoading,
     loadingStatus,
@@ -38,6 +34,7 @@ export default function Home() {
     imageUrl,
   } = state;
 
+  // Called on submit
   function submitted() {
     const isRight = correctPrompt == selectedItem;
     dispatch({ type: "setIsCorrect", payload: isRight });
@@ -46,79 +43,65 @@ export default function Home() {
     dispatch({ type: "setAttempts", payload: attempts + 1 });
   }
 
+  // New Question
   function reset() {
     dispatch({ type: "updateRefreshToken" });
+    dispatch({ type: "setIsCorrect", payload: false });
+    dispatch({ type: "setIsAnswered", payload: false });
   }
 
-  async function load() {
-    // ! should create a new script which aggregates this and grabs from db
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await new_round((value: string) =>
+        dispatch({ type: "setLoadingStatus", payload: value })
+      );
+      if (cancelled) return;
 
-    dispatch({ type: "setLoadingStatus", payload: "Generating Prompts" });
-    let gen_prompts: string[] = [];
-    try {
-      gen_prompts = await gen_three();
-    } catch (e: unknown) {
-      dispatch({
-        type: "setLoadingStatus",
-        payload: "Unexpected error with Prompt Generation",
-      });
-      if (e instanceof Error) {
-        dispatch({
-          type: "setLoadingStatus",
-          payload: "Error Generating Prompts: " + e.message,
-        });
-      }
-      return;
-    }
-    dispatch({ type: "setPrompts", payload: gen_prompts });
-    const random_index: number = Math.floor(Math.random() * 3);
-    dispatch({ type: "setLoadingStatus", payload: "Generating Images" });
-    dispatch({ type: "setCorrectPrompt", payload: random_index });
-    const prompt = prompts[random_index];
-    let img_url = "";
+      const { gen_prompts, correct_prompt, url, id } = res ?? {
+        gen_prompts: [],
+        correct_prompt: -1,
+        url: "",
+        id: -1,
+      };
 
-    try {
-      img_url = (await fetch_runware_images(prompt)) ?? "";
-    } catch (e) {
-      dispatch({
-        type: "setLoadingStatus",
-        payload: "Unexpected error with Prompt Generation",
-      });
-      if (e instanceof Error) {
-        dispatch({
-          type: "setLoadingStatus",
-          payload: "Error Generating Images: " + e.message,
-        });
-      }
-      return;
-    }
+      setCookie(id);
+      console.log("new_round url:", res?.url);
+      dispatch({ type: "setImageUrl", payload: url });
+      dispatch({ type: "setPrompts", payload: gen_prompts });
+      dispatch({ type: "setCorrectPrompt", payload: correct_prompt });
+    })();
 
-    dispatch({ type: "setLoadingStatus", payload: "Loading" });
-    dispatch({ type: "setImageUrl", payload: img_url });
-    dispatch({ type: "setIsLoading", payload: false });
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshToken, dispatch]);
 
-  // ! change this so the user has to press a button to generate
-
-  // useEffect(() => {
-  //   load();
-  // }, []);
-
-  // useEffect(() => {
-  //   setSelectedItem(-1);
-  //   setIsCorrect(false);
-  //   setIsAnswered(false);
-  //   load();
-  // }, [refreshToken]);
-
+  // Loading screen
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center text-[#F6EEE3]">
+      <div className="flex items-center justify-center text-[#F6EEE3] h-dvh">
         {loadingStatus}...
       </div>
     );
   }
 
+  // State on Initial Load
+  console.log("imageUrl:", imageUrl, typeof imageUrl);
+  if (imageUrl == "") {
+    return (
+      <div className="flex items-center justify-center text-[#F6EEE3] h-dvh">
+        <button
+          onClick={reset}
+          className="hover:shadow-md shadow-[#FF8400] color-[#E7D0C0] rounded-[20px] pr-3 pl-3 pt-1 pb-1 border-2 text-[#F6EDE2]"
+        >
+          Start the game
+        </button>
+      </div>
+    );
+  }
+
+  // Main Game Page
   return (
     <div className="font-mono flex flex-col items-center">
       <h1 className="text-[#F6EEE3] text-2xl p-5">

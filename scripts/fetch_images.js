@@ -3,7 +3,7 @@
 import "dotenv/config";
 import { Runware } from "@runware/sdk-js";
 
-runware_api_key = process.env.RUNWARE_API_KEY;
+const runware_api_key = process.env.RUNWARE_API_KEY;
 if (!runware_api_key) {
   throw new Error("Runware API key not found");
 }
@@ -11,15 +11,17 @@ if (!runware_api_key) {
 const runware = new Runware({ apiKey: runware_api_key });
 
 export async function fetch_runware_images(prompt) {
-  const model = "runware:101@1";
-	const images = await runware.requestImages({
-		positivePrompt: prompt,
-		model: model,
-		width: 400,
-		height: 400
-	})
+  // const model = "runware:101@1";
+  // console.log("Requested Images from Runware")
+  // const images = await runware.requestImages({
+  // 	positivePrompt: prompt,
+  // 	model: model,
+  // 	width: 400,
+  // 	height: 400
+  // })
 
-	return images[0].imageURL;
+  // return images[0].imageURL;
+  return "https://t4.ftcdn.net/jpg/08/89/00/87/360_F_889008734_Jt9O8zCFJMmKaQIJx2l1oXIXDgwzxwvp.jpg";
 }
 
 export async function fetch_im_rout_images(prompt) {

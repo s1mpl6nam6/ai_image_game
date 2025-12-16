@@ -1,69 +1,82 @@
 "use server";
 
-import { getSeenCookies } from "./cookie_manager";
+import { getSeenCookies } from "./cookie_getter";
 import { fetch_runware_images } from "./fetch_images";
 import { gen_three } from "./generate_ai_prompts";
-import { supabase } from "@/scripts/supabase/client";
-import { grabFromDB } from "@/scripts/supabase/get_images";
+import {
+  grabFromDB,
+  addToDB,
+  getDbLength,
+} from "@/scripts/supabase/db_functions";
 
 const tableName = "imagesAndPrompts";
 
-export async function new_round(setLoadingStatus: (value: string) => {}) {
+export async function new_round(setLoadingStatus: (value: string) => void) {
   const getting_seen = getSeenCookies();
 
-  const db_length =
-    (await supabase.from(tableName).select("*", { count: "exact", head: true }))
-      .count ?? 0;
+  const db_length = await getDbLength();
 
   const seen = await getting_seen;
-
-  if (!seen || seen.length > db_length) {
-    return await genNewQuestion(setLoadingStatus);
+  if (!seen || seen.length >= db_length) {
+    console.log("Generating new Question");
+    return await genNewQuestion();
   }
-
+  console.log(seen);
+  console.log("Grabbing from DB");
   return await grabFromDB();
 }
 
-async function genNewQuestion(setLoadingStatus: (value: string) => {}) {
-  setLoadingStatus("Generating Prompts");
+async function genNewQuestion() {
+  // setLoadingStatus("Generating Prompts");
   let gen_prompts: string[] = [];
   try {
     gen_prompts = await gen_three();
   } catch (e: unknown) {
-    setLoadingStatus("Unexpected error with Prompt Generation");
+    // setLoadingStatus("Unexpected error with Prompt Generation");
     if (e instanceof Error) {
-      setLoadingStatus("Error Generating Prompts: " + e.message);
-      const { gen_prompts, correct_prompt, url } = (await grabFromDB(
+      // setLoadingStatus("Error Generating Prompts: " + e.message);
+      const { gen_prompts, correct_prompt, url, id } = (await grabFromDB(
         false
-      )) ?? { gen_prompts: [], correct_prompt: -1, url: "" };
+      )) ?? { gen_prompts: [], correct_prompt: -1, url: "", id: -1 };
+      return { gen_prompts, correct_prompt, url, id };
     }
     return;
   }
-  
-  const correctPromptNum: number = Math.floor(Math.random() * 3);
-  setLoadingStatus("Generating Images");
+
+  let correctPromptNum: number = Math.floor(Math.random() * 3);
+  // setLoadingStatus("Generating Images");
   const prompt = gen_prompts[correctPromptNum];
   let img_url = "";
 
   try {
     img_url = (await fetch_runware_images(prompt)) ?? "";
   } catch (e) {
-    setLoadingStatus("Unexpected error with Prompt Generation");
+    // setLoadingStatus("Unexpected error with Prompt Generation");
+    console.error("Error Generating Images");
     if (e instanceof Error) {
-      setLoadingStatus("Error Generating Images: " + e.message);
-      const { gen_prompts, correct_prompt, url } = (await grabFromDB(
+      // setLoadingStatus("Error Generating Images: " + e.message);
+      const { gen_prompts, correct_prompt, url, id } = (await grabFromDB(
         false
-      )) ?? { gen_prompts: [], correct_prompt: -1, url: "" };
+      )) ?? { gen_prompts: [], correct_prompt: -1, url: "", id: -1 };
+      return { gen_prompts, correct_prompt, url, id };
     }
     return;
   }
 
-  setLoadingStatus("Loading");
+  // setLoadingStatus("Loading");
 
-  return {
-    prompts: [],
-    correctPrompt: 0,
-    url: "",
+  const payload = {
+    gen_prompts: gen_prompts,
+    correct_prompt: correctPromptNum,
+    url: img_url,
   };
-}
 
+  const id = addToDB(payload);
+  const output = {
+    gen_prompts: gen_prompts,
+    correct_prompt: correctPromptNum,
+    url: img_url,
+    id: id,
+  };
+  return output;
+}

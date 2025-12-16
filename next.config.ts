@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "storage.imagerouter.io"
+      },
+      {
+        protocol: "https",
+        hostname: "t4.ftcdn.net"
       }
     ],
   },

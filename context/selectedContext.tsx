@@ -1,3 +1,5 @@
+"use client"
+
 import { createContext, useContext, useReducer} from "react";
 
 type State = {
@@ -46,7 +48,7 @@ function reducer(state: State, action: Action) {
 }
 
 const initialStaete: State = {
-  isLoading: true,
+  isLoading: false,
   loadingStatus: "Loading",
   prompts: [""],
   correctPrompt: -1,

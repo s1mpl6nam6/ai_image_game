@@ -1,6 +1,9 @@
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
-export async function addToCookie(image_id: number) {
+export async function POST(req: Request) {
+  const { image_id } = await req.json();
+
   const cookiesStore = await cookies();
   const cookies_seen = cookiesStore.get("seen_images");
   let seen = JSON.parse(cookies_seen ? cookies_seen.value : "[]");
@@ -14,16 +17,5 @@ export async function addToCookie(image_id: number) {
   }
 
   cookiesStore.set("seen_images", JSON.stringify(seen), { path: "/" });
-}
-
-export async function getSeenCookies() {
-  const cookiesStore = await cookies();
-  const cookies_seen = cookiesStore.get("seen_images");
-  let seen = JSON.parse(cookies_seen ? cookies_seen.value : "[]");
-
-  if (!seen) {
-    seen = "[]";
-  }
-
-  return seen;
+  return NextResponse.json({ ok: true, seen }, { status: 200 });
 }
