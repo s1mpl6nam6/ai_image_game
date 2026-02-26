@@ -1,7 +1,6 @@
 "use server"
 
 import { GoogleGenAI } from "@google/genai";
-import 'dotenv/config';
 import {z} from 'zod';
 const apiKey = process.env.GEMINI_API_KEY
 if (!apiKey) {

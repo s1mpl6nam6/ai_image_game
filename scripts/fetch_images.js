@@ -1,6 +1,5 @@
 "use server";
 
-import "dotenv/config";
 import { Runware } from "@runware/sdk-js";
 
 export async function fetch_runware_images(prompt) {
