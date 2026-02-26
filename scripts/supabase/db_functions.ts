@@ -6,10 +6,6 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { setCookie } from "../cookie_sender";
 
-import "dotenv/config";
-import { FileOutput } from "lucide-react";
-import { error } from "console";
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_API_SECRET_KEY!
