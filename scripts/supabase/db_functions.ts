@@ -1,7 +1,5 @@
 "use server";
 
-import "dotenv/config";
-
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { setCookie } from "../cookie_sender";
